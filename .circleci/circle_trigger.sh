@@ -63,7 +63,7 @@ PARAMETERS='"trigger":false'
 COUNT=0
 for PACKAGE in ${PACKAGES[@]}
 do
-  PACKAGE_PATH=${ROOT}/$PACKAGE
+  PACKAGE_PATH=${ROOT#.}/$PACKAGE
   echo "git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ${PACKAGE_PATH#/}"
   echo "git diff --name-only $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA -- ${PACKAGE_PATH#/}"
   echo $(git diff --name-only $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA -- ${PACKAGE_PATH#/})
