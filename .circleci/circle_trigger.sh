@@ -70,7 +70,7 @@ do
   LATEST_COMMIT_SINCE_LAST_BUILD=$(git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ./${PACKAGE_PATH#/})
   echo ${LATEST_COMMIT_SINCE_LAST_BUILD}
 
-  if [[ -z "$LATEST_COMMIT_SINCE_LAST_BUILD" ]]; then
+  if [[ -z $LATEST_COMMIT_SINCE_LAST_BUILD ]]; then
     echo -e "\e[90m  [-] $PACKAGE \e[0m"
   else
     PARAMETERS+=", \"$PACKAGE\":true"
