@@ -64,13 +64,8 @@ COUNT=0
 for PACKAGE in ${PACKAGES[@]}
 do
   PACKAGE_PATH=${ROOT}/$PACKAGE
-  echo $(ls ${PACKAGE_PATH})
-  echo ${ROOT}
-  echo ${PACKAGE_PATH}
-  echo ${CIRCLE_SHA1}
-  # LATEST_COMMIT_SINCE_LAST_BUILD="asdasdasd"
   echo "git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ${PACKAGE_PATH#/}"
-  echo $(git status)
+  echo $(git log -1)
   echo $(git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ${PACKAGE_PATH#/})
   LATEST_COMMIT_SINCE_LAST_BUILD=$(git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ${PACKAGE_PATH#/})
   echo "git return ${LATEST_COMMIT_SINCE_LAST_BUILD}"
