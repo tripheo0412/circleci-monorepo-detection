@@ -6,13 +6,14 @@ set -e
 ROOT="./packages" 
 REPOSITORY_TYPE="github"
 CIRCLE_API="https://circleci.com/api"
-
+echo ${CIRCLE_BRANCH}
 ############################################
 ## 1. Commit SHA of last CI build
 ############################################
 LAST_COMPLETED_BUILD_URL="${CIRCLE_API}/v1.1/project/${REPOSITORY_TYPE}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/tree/${CIRCLE_BRANCH}?filter=completed&limit=100&shallow=true"
-LAST_COMPLETED_BUILD_SHA=`curl -Ss -u "${CIRCLE_TOKEN}:" "${LAST_COMPLETED_BUILD_URL}" | jq -r 'map(select(.status == "success") | select(.workflows.workflow_name != "ci")) | .[0]["vcs_revision"]'`
-
+echo $(curl -Ss ${LAST_COMPLETED_BUILD_URL} | jq -r 'map(select(.status == "success") | select(.workflows.workflow_name != "ci")) | .[0]["vcs_revision"]')
+LAST_COMPLETED_BUILD_SHA=`curl -Ss ${LAST_COMPLETED_BUILD_URL} | jq -r 'map(select(.status == "success") | select(.workflows.workflow_name != "ci")) | .[0]["vcs_revision"]'`
+echo ${LAST_COMPLETED_BUILD_SHA}
 if  [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]]; then
   echo -e "\e[93mThere are no completed CI builds in branch ${CIRCLE_BRANCH}.\e[0m"
 
@@ -39,12 +40,13 @@ if  [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]]; then
   echo "Searching for CI builds in branch '${PARENT_BRANCH}' ..."
 
   LAST_COMPLETED_BUILD_URL="${CIRCLE_API}/v1.1/project/${REPOSITORY_TYPE}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/tree/${PARENT_BRANCH}?filter=completed&limit=100&shallow=true"
+  echo ${LAST_COMPLETED_BUILD_URL}
   LAST_COMPLETED_BUILD_SHA=`curl -Ss -u "${CIRCLE_TOKEN}:" "${LAST_COMPLETED_BUILD_URL}" \
     | jq -r "map(\
       select(.status == \"success\") | select(.workflows.workflow_name != \"ci\") | select(.build_num < ${CIRCLE_BUILD_NUM})) \
     | .[0][\"vcs_revision\"]"`
 fi
-
+echo ${LAST_COMPLETED_BUILD_SHA}
 if [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]]; then
   echo -e "\e[93mNo CI builds for branch ${PARENT_BRANCH}. Using master.\e[0m"
   LAST_COMPLETED_BUILD_SHA=master
@@ -55,16 +57,22 @@ fi
 ############################################
 PACKAGES=$(ls ${ROOT} -l | grep ^d | awk '{print $9}')
 echo "Searching for changes since commit [${LAST_COMPLETED_BUILD_SHA:0:7}] ..."
-
+echo ${LAST_COMPLETED_BUILD_SHA}
 ## The CircleCI API parameters object
 PARAMETERS='"trigger":false'
 COUNT=0
 for PACKAGE in ${PACKAGES[@]}
 do
   PACKAGE_PATH=${ROOT#.}/$PACKAGE
-  LATEST_COMMIT_SINCE_LAST_BUILD=$(git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ${PACKAGE_PATH#/})
+  echo ${PACKAGE_PATH}
+  echo ${CIRCLE_SHA1}
+  # LATEST_COMMIT_SINCE_LAST_BUILD="asdasdasd"
+  echo "git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ./${PACKAGE_PATH#/}"
+  echo $(git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ./${PACKAGE_PATH#/})
+  LATEST_COMMIT_SINCE_LAST_BUILD=$(git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ./${PACKAGE_PATH#/})
+  echo ${LATEST_COMMIT_SINCE_LAST_BUILD}
 
-  if [[ -z "$LATEST_COMMIT_SINCE_LAST_BUILD" ]]; then
+  if [[ -z $LATEST_COMMIT_SINCE_LAST_BUILD ]]; then
     echo -e "\e[90m  [-] $PACKAGE \e[0m"
   else
     PARAMETERS+=", \"$PACKAGE\":true"
