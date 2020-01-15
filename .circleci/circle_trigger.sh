@@ -67,7 +67,7 @@ do
   echo ${PACKAGE_PATH}
   echo ${CIRCLE_SHA1}
   # LATEST_COMMIT_SINCE_LAST_BUILD="asdasdasd"
-  echo (git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ./${PACKAGE_PATH#/})
+  echo $(git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ./${PACKAGE_PATH#/})
   LATEST_COMMIT_SINCE_LAST_BUILD=$(git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ./${PACKAGE_PATH#/})
   echo ${LATEST_COMMIT_SINCE_LAST_BUILD}
 
