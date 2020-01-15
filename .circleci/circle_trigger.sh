@@ -64,7 +64,7 @@ COUNT=0
 for PACKAGE in ${PACKAGES[@]}
 do
   PACKAGE_PATH=${ROOT}/$PACKAGE
-  echo $(ls)
+  echo $(ls ${PACKAGE_PATH})
   echo ${ROOT}
   echo ${PACKAGE_PATH}
   echo ${CIRCLE_SHA1}
