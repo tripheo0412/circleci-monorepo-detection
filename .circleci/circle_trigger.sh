@@ -64,6 +64,7 @@ COUNT=0
 for PACKAGE in ${PACKAGES[@]}
 do
   PACKAGE_PATH=${ROOT#.}/$PACKAGE
+  echo ${ROOT}
   echo ${PACKAGE_PATH}
   echo ${CIRCLE_SHA1}
   # LATEST_COMMIT_SINCE_LAST_BUILD="asdasdasd"
