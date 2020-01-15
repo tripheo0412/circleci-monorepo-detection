@@ -6,7 +6,7 @@ set -e
 ROOT="./packages" 
 REPOSITORY_TYPE="github"
 CIRCLE_API="https://circleci.com/api"
-
+echo ${CIRCLE_BRANCH}
 ############################################
 ## 1. Commit SHA of last CI build
 ############################################
