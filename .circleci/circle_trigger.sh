@@ -49,7 +49,7 @@ fi
 echo ${LAST_COMPLETED_BUILD_SHA}
 if [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]]; then
   echo -e "\e[93mNo CI builds for branch ${PARENT_BRANCH}. Using master.\e[0m"
-  LAST_COMPLETED_BUILD_SHA=master
+  LAST_COMPLETED_BUILD_SHA=origin/master
 fi
 
 ############################################
@@ -65,10 +65,10 @@ for PACKAGE in ${PACKAGES[@]}
 do
   PACKAGE_PATH=${ROOT#.}/$PACKAGE
   echo "git --no-pager log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ${PACKAGE_PATH#/}"
-  echo "git --no-pager diff --name-only $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA -- ${PACKAGE_PATH#/} | cat"
-  echo $(git --no-pager diff --name-only $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA -- ${PACKAGE_PATH#/} | cat)
-  echo $(git --no-pager log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ${PACKAGE_PATH#/})
-  LATEST_COMMIT_SINCE_LAST_BUILD=$(git --no-pager log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ${PACKAGE_PATH#/})
+  echo "git diff --name-only $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA -- ${PACKAGE_PATH#/} | cat"
+  echo $(git diff --name-only $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA -- ${PACKAGE_PATH#/} | cat)
+  echo $(git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ${PACKAGE_PATH#/} | cat)
+  LATEST_COMMIT_SINCE_LAST_BUILD=$(git --no-pager log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ${PACKAGE_PATH#/} | cat)
   echo "git return ${LATEST_COMMIT_SINCE_LAST_BUILD}"
 
   if [[ -z $LATEST_COMMIT_SINCE_LAST_BUILD ]]; then
