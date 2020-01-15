@@ -63,7 +63,7 @@ PARAMETERS='"trigger":false'
 COUNT=0
 for PACKAGE in ${PACKAGES[@]}
 do
-  PACKAGE_PATH=${ROOT#.}/$PACKAGE
+  PACKAGE_PATH=${ROOT}/$PACKAGE
   echo ${ROOT}
   echo ${PACKAGE_PATH}
   echo ${CIRCLE_SHA1}
@@ -71,7 +71,7 @@ do
   echo "git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ./${PACKAGE_PATH#/}"
   echo $(git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ./${PACKAGE_PATH#/})
   LATEST_COMMIT_SINCE_LAST_BUILD=$(git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ./${PACKAGE_PATH#/})
-  echo ${LATEST_COMMIT_SINCE_LAST_BUILD}
+  echo "git return ${LATEST_COMMIT_SINCE_LAST_BUILD}"
 
   if [[ -z $LATEST_COMMIT_SINCE_LAST_BUILD ]]; then
     echo -e "\e[90m  [-] $PACKAGE \e[0m"
