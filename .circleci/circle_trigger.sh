@@ -3,7 +3,7 @@ set -e
 
 # The root directory of packages.
 # Use `.` if your packages are located in root.
-ROOT="./packages" 
+ROOT="./apps" 
 REPOSITORY_TYPE="github"
 CIRCLE_API="https://circleci.com/api"
 echo ${CIRCLE_BRANCH}
@@ -11,9 +11,7 @@ echo ${CIRCLE_BRANCH}
 ## 1. Commit SHA of last CI build
 ############################################
 LAST_COMPLETED_BUILD_URL="${CIRCLE_API}/v1.1/project/${REPOSITORY_TYPE}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/tree/${CIRCLE_BRANCH}?filter=completed&limit=100&shallow=true"
-echo $(curl -Ss ${LAST_COMPLETED_BUILD_URL} | jq -r 'map(select(.status == "success") | select(.workflows.workflow_name != "ci")) | .[0]["vcs_revision"]')
 LAST_COMPLETED_BUILD_SHA=`curl -Ss ${LAST_COMPLETED_BUILD_URL} | jq -r 'map(select(.status == "success") | select(.workflows.workflow_name != "ci")) | .[0]["vcs_revision"]'`
-echo ${LAST_COMPLETED_BUILD_SHA}
 if  [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]]; then
   echo -e "\e[93mThere are no completed CI builds in branch ${CIRCLE_BRANCH}.\e[0m"
 
@@ -25,11 +23,11 @@ if  [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]]; then
     | sed 's/[\^~].*//' \
     | uniq)
 
-  REMOTE_BRANCHES=$(git branch -r | sed 's/\s*origin\///' | tr '\n' ' ')
+  REMOTE_BRANCHES=$(git branch -r | tr '\n' ' ')
   PARENT_BRANCH=master
   for BRANCH in ${TREE[@]}
   do
-    BRANCH=${BRANCH#"origin/"}
+    BRANCH=${BRANCH}
     if [[ " ${REMOTE_BRANCHES[@]} " == *" ${BRANCH} "* ]]; then
         echo "Found the parent branch: ${CIRCLE_BRANCH}..${BRANCH}"
         PARENT_BRANCH=$BRANCH
@@ -40,7 +38,6 @@ if  [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]]; then
   echo "Searching for CI builds in branch '${PARENT_BRANCH}' ..."
 
   LAST_COMPLETED_BUILD_URL="${CIRCLE_API}/v1.1/project/${REPOSITORY_TYPE}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/tree/${PARENT_BRANCH}?filter=completed&limit=100&shallow=true"
-  echo ${LAST_COMPLETED_BUILD_URL}
   LAST_COMPLETED_BUILD_SHA=`curl -Ss -u "${CIRCLE_TOKEN}:" "${LAST_COMPLETED_BUILD_URL}" \
     | jq -r "map(\
       select(.status == \"success\") | select(.workflows.workflow_name != \"ci\") | select(.build_num < ${CIRCLE_BUILD_NUM})) \
@@ -57,19 +54,13 @@ fi
 ############################################
 PACKAGES=$(ls ${ROOT} -l | grep ^d | awk '{print $9}')
 echo "Searching for changes since commit [${LAST_COMPLETED_BUILD_SHA:0:7}] ..."
-echo ${LAST_COMPLETED_BUILD_SHA}
 ## The CircleCI API parameters object
 PARAMETERS='"trigger":false'
 COUNT=0
 for PACKAGE in ${PACKAGES[@]}
 do
   PACKAGE_PATH=${ROOT#.}/$PACKAGE
-  echo "git --no-pager log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ${PACKAGE_PATH#/}"
-  echo "git diff --name-only $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA -- ${PACKAGE_PATH#/} | cat"
-  echo $(git diff --name-only $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA -- ${PACKAGE_PATH#/} | cat)
-  echo $(git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ${PACKAGE_PATH#/} | cat)
   LATEST_COMMIT_SINCE_LAST_BUILD=$(git --no-pager log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ${PACKAGE_PATH#/} | cat)
-  echo "git return ${LATEST_COMMIT_SINCE_LAST_BUILD}"
 
   if [[ -z $LATEST_COMMIT_SINCE_LAST_BUILD ]]; then
     echo -e "\e[90m  [-] $PACKAGE \e[0m"
