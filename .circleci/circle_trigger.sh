@@ -6,7 +6,6 @@ set -e
 ROOT="./apps" 
 REPOSITORY_TYPE="github"
 CIRCLE_API="https://circleci.com/api"
-echo ${CIRCLE_BRANCH}
 ############################################
 ## 1. Commit SHA of last CI build
 ############################################
@@ -22,7 +21,7 @@ if  [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]]; then
     | sed 's/.*\[\(.*\)\].*/\1/' \
     | sed 's/[\^~].*//' \
     | uniq)
-  echo="${TREE}"
+  echo "${TREE}"
   REMOTE_BRANCHES=$(git branch -r | sed 's/\s*origin\///' | tr '\n' ' ')
   PARENT_BRANCH=master
   for BRANCH in ${TREE[@]}
@@ -81,7 +80,6 @@ echo "Changes detected in ${COUNT} package(s)."
 ############################################
 ## 3. CicleCI REST API call
 ############################################
-echo="${CIRCLE_BRANCH}"
 DATA="{ \"branch\": \"$CIRCLE_BRANCH\", \"parameters\": { $PARAMETERS } }"
 echo "Triggering pipeline with data:"
 echo -e "  $DATA"
