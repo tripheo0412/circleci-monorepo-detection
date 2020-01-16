@@ -30,6 +30,7 @@ jobs:
     executor: node
     steps:
       - checkout
+      - run: echo "This is pipeline ID << pipeline.id >>"
       - run:
           name: Trigger workflows
           command: chmod +x .circleci/circle_trigger.sh && .circleci/circle_trigger.sh
