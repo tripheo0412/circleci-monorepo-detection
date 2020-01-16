@@ -86,7 +86,7 @@ echo -e "  $DATA"
 URL="${CIRCLE_API}/v2/project/${REPOSITORY_TYPE}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/pipeline"
 echo $URL
 HTTP_RESPONSE=$(curl -s --request POST $URL \ --header "Content-Type: application/json" \ --header "Circle-Token: ${CIRCLE_TOKEN}" --data-raw "$DATA" -o response.txt -w "%{http_code}")
-
+echo "${HTTP_RESPONSE}"
 if [ "$HTTP_RESPONSE" -ge "200" ] && [ "$HTTP_RESPONSE" -lt "300" ]; then
     echo "API call succeeded."
     echo "Response:"
