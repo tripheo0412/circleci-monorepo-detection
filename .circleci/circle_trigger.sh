@@ -85,6 +85,7 @@ echo -e "  $DATA"
 
 URL="${CIRCLE_API}/v2/project/${REPOSITORY_TYPE}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/pipeline"
 echo "${URL}"
+echo (curl -s --location --request POST $URL \ --header "Content-Type: application/json" \ --header "Circle-Token: ${CIRCLE_TOKEN}" -d "$DATA" -o response.txt -w "%{http_code}")
 HTTP_RESPONSE=$(curl -s --location --request POST $URL \ --header "Content-Type: application/json" \ --header "Circle-Token: ${CIRCLE_TOKEN}" -d "$DATA" -o response.txt -w "%{http_code}")
 
 if [ "$HTTP_RESPONSE" -ge "200" ] && [ "$HTTP_RESPONSE" -lt "300" ]; then
