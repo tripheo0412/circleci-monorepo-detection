@@ -3,17 +3,14 @@ set -e
 
 # The root directory of packages.
 # Use `.` if your packages are located in root.
-ROOT="./packages" 
+ROOT="./apps" 
 REPOSITORY_TYPE="github"
 CIRCLE_API="https://circleci.com/api"
-echo ${CIRCLE_BRANCH}
 ############################################
 ## 1. Commit SHA of last CI build
 ############################################
 LAST_COMPLETED_BUILD_URL="${CIRCLE_API}/v1.1/project/${REPOSITORY_TYPE}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/tree/${CIRCLE_BRANCH}?filter=completed&limit=100&shallow=true"
-echo $(curl -Ss ${LAST_COMPLETED_BUILD_URL} | jq -r 'map(select(.status == "success") | select(.workflows.workflow_name != "ci")) | .[0]["vcs_revision"]')
 LAST_COMPLETED_BUILD_SHA=`curl -Ss ${LAST_COMPLETED_BUILD_URL} | jq -r 'map(select(.status == "success") | select(.workflows.workflow_name != "ci")) | .[0]["vcs_revision"]'`
-echo ${LAST_COMPLETED_BUILD_SHA}
 if  [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]]; then
   echo -e "\e[93mThere are no completed CI builds in branch ${CIRCLE_BRANCH}.\e[0m"
 
@@ -24,7 +21,7 @@ if  [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]]; then
     | sed 's/.*\[\(.*\)\].*/\1/' \
     | sed 's/[\^~].*//' \
     | uniq)
-
+  echo "${TREE}"
   REMOTE_BRANCHES=$(git branch -r | sed 's/\s*origin\///' | tr '\n' ' ')
   PARENT_BRANCH=master
   for BRANCH in ${TREE[@]}
@@ -40,16 +37,14 @@ if  [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]]; then
   echo "Searching for CI builds in branch '${PARENT_BRANCH}' ..."
 
   LAST_COMPLETED_BUILD_URL="${CIRCLE_API}/v1.1/project/${REPOSITORY_TYPE}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/tree/${PARENT_BRANCH}?filter=completed&limit=100&shallow=true"
-  echo ${LAST_COMPLETED_BUILD_URL}
   LAST_COMPLETED_BUILD_SHA=`curl -Ss -u "${CIRCLE_TOKEN}:" "${LAST_COMPLETED_BUILD_URL}" \
     | jq -r "map(\
       select(.status == \"success\") | select(.workflows.workflow_name != \"ci\") | select(.build_num < ${CIRCLE_BUILD_NUM})) \
     | .[0][\"vcs_revision\"]"`
 fi
-echo ${LAST_COMPLETED_BUILD_SHA}
 if [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]]; then
   echo -e "\e[93mNo CI builds for branch ${PARENT_BRANCH}. Using master.\e[0m"
-  LAST_COMPLETED_BUILD_SHA=master
+  LAST_COMPLETED_BUILD_SHA=origin/master
 fi
 
 ############################################
@@ -57,20 +52,13 @@ fi
 ############################################
 PACKAGES=$(ls ${ROOT} -l | grep ^d | awk '{print $9}')
 echo "Searching for changes since commit [${LAST_COMPLETED_BUILD_SHA:0:7}] ..."
-echo ${LAST_COMPLETED_BUILD_SHA}
 ## The CircleCI API parameters object
 PARAMETERS='"trigger":false'
 COUNT=0
 for PACKAGE in ${PACKAGES[@]}
 do
   PACKAGE_PATH=${ROOT#.}/$PACKAGE
-  echo ${PACKAGE_PATH}
-  echo ${CIRCLE_SHA1}
-  # LATEST_COMMIT_SINCE_LAST_BUILD="asdasdasd"
-  echo "git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ./${PACKAGE_PATH#/}"
-  echo $(git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ./${PACKAGE_PATH#/})
-  LATEST_COMMIT_SINCE_LAST_BUILD=$(git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ./${PACKAGE_PATH#/})
-  echo ${LATEST_COMMIT_SINCE_LAST_BUILD}
+  LATEST_COMMIT_SINCE_LAST_BUILD=$(git --no-pager log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ${PACKAGE_PATH#/} | cat)
 
   if [[ -z $LATEST_COMMIT_SINCE_LAST_BUILD ]]; then
     echo -e "\e[90m  [-] $PACKAGE \e[0m"
@@ -95,9 +83,10 @@ DATA="{ \"branch\": \"$CIRCLE_BRANCH\", \"parameters\": { $PARAMETERS } }"
 echo "Triggering pipeline with data:"
 echo -e "  $DATA"
 
-URL="${CIRCLE_API}/v2/project/${REPOSITORY_TYPE}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/pipeline"
-HTTP_RESPONSE=$(curl -s -u ${CIRCLE_TOKEN}: -o response.txt -w "%{http_code}" -X POST --header "Content-Type: application/json" -d "$DATA" $URL)
-
+URL="${CIRCLE_API}/v2/project/${REPOSITORY_TYPE}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/pipeline?circle-token=${CIRCLE_TOKEN}"
+echo $URL
+HTTP_RESPONSE=$(curl -s -o response.txt -w "%{http_code}" -X POST --header "Content-Type: application/json" -d "$DATA" $URL)
+echo "${HTTP_RESPONSE}"
 if [ "$HTTP_RESPONSE" -ge "200" ] && [ "$HTTP_RESPONSE" -lt "300" ]; then
     echo "API call succeeded."
     echo "Response:"
